@@ -120,7 +120,7 @@ func TestPool(t *testing.T) {
 
 			p := NewPool(1, func() *strings.Builder {
 				return new(strings.Builder)
-			}, nil, func(v *strings.Builder) *strings.Builder {
+			}, func(v *strings.Builder) *strings.Builder {
 				v.WriteString("!")
 				return v
 			})
@@ -131,8 +131,9 @@ func TestPool(t *testing.T) {
 			v0 := p.Get()
 			c.So(v0, c.ShouldNotBeNil)
 			c.So(p.Ready(), c.ShouldEqual, 1) // seeded
-			c.So(v0.String(), c.ShouldEqual, "")
+			c.So(v0.String(), c.ShouldEqual, "!")
 			v0.WriteString(`life at the speed of thought`)
+			c.So(v0.String(), c.ShouldEqual, `!life at the speed of thought`)
 
 			p.Put(v0)
 			c.So(p.Ready(), c.ShouldEqual, 2)
@@ -140,7 +141,17 @@ func TestPool(t *testing.T) {
 			v1 := p.Get()
 			c.So(v1, c.ShouldNotBeNil)
 			c.So(p.Ready(), c.ShouldEqual, 1)
-			c.So(v1.String(), c.ShouldEqual, `life at the speed of thought!`)
+			c.So(v1.String(), c.ShouldBeIn, `!`, `!life at the speed of thought!`)
+
+			v2 := p.Get()
+			c.So(v2, c.ShouldNotBeNil)
+			c.So(p.Ready(), c.ShouldEqual, 1)
+			c.So(v2.String(), c.ShouldBeIn, `!`, `!life at the speed of thought!`)
+
+			v3 := p.Get()
+			c.So(v3, c.ShouldNotBeNil)
+			c.So(p.Ready(), c.ShouldEqual, 1)
+			c.So(v3.String(), c.ShouldEqual, `!`)
 
 		})
 
